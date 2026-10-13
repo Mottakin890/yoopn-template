@@ -2,7 +2,7 @@
 
 A **credential-free mirror of the YooPN Flutter application**, published as a
 working template. Everything a developer needs to see is here — the full
-source, the native Android/iOS wiring, the backend migrations, 50 passing
+source, the native Android/iOS wiring, the backend migrations, 57 passing
 tests and a CI pipeline — and nothing that identifies a real project or a
 real account.
 
@@ -17,7 +17,7 @@ Verify it is healthy before you read a line of it:
 
 ```sh
 flutter analyze    # No issues found!
-flutter test       # All tests passed! (50 tests)
+flutter test       # All tests passed! (57 tests)
 ```
 
 > Every identifier is a placeholder: Android/iOS bundle id `com.example.yoopn`,
@@ -90,7 +90,7 @@ outcome, and neither can throw into the UI.
 | Routing | `go_router` with an auth-guard redirect + nav observer | `core/routes/` |
 | DI | GetIt, idempotent `initDependencyInjection()` | `core/utils/` |
 | Observability | tagged logger (`TUNNEL`/`VPN`/`GATE`/`TELEMETRY`/`PERM`) | `core/utils/app_logger.dart` |
-| Testing | `flutter_test`, headless fakes | `test/` — 50 tests |
+| Testing | `flutter_test`, headless fakes | `test/` — 57 tests |
 | CI | GitHub Actions, 4 jobs, `if-no-files-found`, artifact upload | `.github/workflows/ci.yml` |
 | Secret scanning | gitleaks + pre-commit + fallback sweep | `.gitleaks.toml`, `.githooks/` |
 | Dependency bots | Dependabot (actions + gradle) | `.github/dependabot.yml` |
@@ -187,7 +187,8 @@ Full policy: [`SECURITY.md`](SECURITY.md).
 ```
 .
 ├── lib/                     application source (8.7k lines, 108 Dart files)
-├── test/                    50 tests — bloc, tunnel, entities, CSV, cache, telemetry, ads
+├── test/                    57 tests — bloc, tunnel, entities, CSV, cache, telemetry, ads,
+│                            ad gates, placeholder guard
 ├── tool/
 │   ├── fetch_snapshot.dart  refreshes assets/servers_snapshot.json from VPNGate
 │   ├── scan_secrets.sh      secret scanner (gitleaks + fallback)

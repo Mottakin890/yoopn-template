@@ -2,7 +2,7 @@
 
 > Single source of truth for agents/sessions. Update it when architecture,
 > dependencies, or scope decisions change. Last verified: 12-Oct-2026
-> (`flutter analyze` clean, `flutter test` 50/50 — post race/spacing/arch
+> (`flutter analyze` clean, `flutter test` 57/57 — post race/spacing/arch
 > audit: fetch slots serialized, tunnel reentrancy guards, ad-gate join
 > semantics, `Spacing.*` for all gaps, `showAppSnackBar`, `server_ranking`
 > single sort/filter, `initDependencyInjection` idempotent).
@@ -179,14 +179,14 @@
 ./tool/install_hooks.sh       # hooks + .env from example (idempotent)
 flutter pub get
 flutter analyze --no-pub      # must be clean
-flutter test                  # 50 tests (bloc, tunnel, entity, csv→json, cache, telemetry, ads)
+flutter test                  # 57 tests (bloc, tunnel, entity, csv→json, cache, telemetry, ads, guard)
 flutter run -d <android-id>   # tap a LIVE relay (flag+host/IP), then power button
 dart run tool/fetch_snapshot.dart   # refresh bundled server snapshot
 ./tool/scan_secrets.sh --staged     # credential guard (also runs pre-commit + CI)
 ```
 
 CI (`.github/workflows/ci.yml`) runs `guard` (gitleaks + `.env`/keystore
-assertions) → `quality` (format check, analyze, 50 tests) → `build` (release
+assertions) → `quality` (format check, analyze, 57 tests) → `build` (release
 APK with `--dart-define-from-file`, then asserts no Supabase URL is inside
 the artifact).
 

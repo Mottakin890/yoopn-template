@@ -83,11 +83,13 @@ for f in "${FILES[@]}"; do
     *.png|*.jpg|*.jpeg|*.gif|*.ttf|*.otf|*.lock|*.jar|*.zip) continue ;;
   esac
   # `--` is mandatory: the pattern starts with `-----BEGIN`, which grep would
-  # otherwise parse as an option bundle (and fail with rc=2, i.e. silently
-  # scan nothing).
+  # otherwise parse as an option bundle (rc=2, i.e. silently scan nothing).
   grep $GREP_FLAGS --binary-files=without-match -- "$PATTERNS" "$f" >"$TMP/hits" 2>/dev/null
   [ -s "$TMP/hits" ] || continue
-  grep -vE "$FILTER" "$TMP/hits" >"$TMP/real" 2>/dev/null
+  # Honour gitleaks' inline suppression marker, same semantics as gitleaks
+  # itself: `gitleaks:allow` on the finding line waives that one finding.
+  grep -v 'gitleaks:allow' "$TMP/hits" >"$TMP/hits2" 2>/dev/null
+  grep -vE "$FILTER" "$TMP/hits2" >"$TMP/real" 2>/dev/null
   [ -s "$TMP/real" ] || continue
   echo "── potential secret in $f"
   # Redact before printing: this output lands in CI logs.

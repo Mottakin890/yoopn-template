@@ -161,16 +161,30 @@ jobs:
             --dart-define-from-file=.secrets.json \
             --no-pub
 
-      - name: Assert the Supabase URL is NOT in the artifact
+      - name: Assert credentials came from --dart-define, not the bundled .env
         run: |
           set -euo pipefail
           APK=$(ls -1 build/app/outputs/flutter-apk/*.apk | head -1)
           echo "checking $APK"
-          if unzip -p "$APK" 'assets/flutter_assets/*' 2>/dev/null | strings | grep -q 'build-check.supabase.co'; then
-            echo "::error::credentials leaked into the APK — check SupabaseConfig resolution order."
+
+          # 1. The .env asset is bundled for local dev, so a build that
+          #    resolved config from it would ship the key in plain text.
+          if unzip -p "$APK" 'assets/flutter_assets/*' 2>/dev/null | strings \
+               | grep -q 'build-check.supabase.co'; then
+            echo "::error::config was resolved from the bundled .env asset — the credential would ship in cleartext."
             exit 1
           fi
-          echo "ok: no Supabase URL inside the APK asset bundle"
+          echo "ok: no Supabase URL in the asset bundle"
+
+          # 2. It must nonetheless BE present in compiled code, which proves
+          #    --dart-define-from-file actually applied (catches a silently
+          #    dropped define, which would ship a broken app).
+          if ! unzip -p "$APK" 'lib/*/libapp.so' 2>/dev/null | strings \
+                | grep -q 'build-check.supabase.co'; then
+            echo "::error::--dart-define-from-file did not take effect — libapp.so has no compiled config."
+            exit 1
+          fi
+          echo "ok: --dart-define-from-file applied (value found in libapp.so)"
 
       - uses: actions/upload-artifact@v4
         with:
