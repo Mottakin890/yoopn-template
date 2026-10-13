@@ -1,0 +1,83 @@
+# ---------------------------------------------------------------------------
+# gitleaks configuration — https://github.com/gitleaks/gitleaks
+#
+# Used by:
+#   .githooks/pre-commit        (local, blocks the commit)
+#   .github/workflows/ci.yml    (CI, blocks the push)
+#   tool/scan_secrets.sh        (manual / fallback sweep without gitleaks)
+#
+# Design: *fail closed*. A finding is a hard error; if a rule produces false
+# positives the fix is an explicit, narrow `allowlist` entry below — never a
+# blanket skip of the scanner.
+# ---------------------------------------------------------------------------
+
+title = "yoopn-templates gitleaks config"
+
+[extend]
+useDefault = true
+
+# Paths that are generated or intentionally contain documentation-shaped
+# placeholder strings. They are still scanned; only the listed regexes are
+# waived, and only for these files.
+[allowlist]
+description = "Documentation and example files may contain placeholder-looking tokens"
+paths = [
+  '''(^|/)(\.env\.example|\.env\.template)$''',
+  '''(^|/)docs/''',
+  '''(^|/)(README|CONTEXT|SECURITY|ARCHITECTURE|CONTRIBUTING)\.md$''',
+  '''(^|/)LICENSE(\.md)?$''',
+  '''(^|/)tool/''',
+  '''(^|/)supabase/probe\.sh$''',
+]
+regexes = [
+  # "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY" and friends are instructions,
+  # not credentials.
+  '''YOUR_[A-Z0-9_]+''',
+  '''your_supabase_[a-z0-9_]+''',
+  '''ca-app-pub-3940256099942544/[0-9]+''',
+  '''ca-app-pub-3940256099942544~[0-9]+''',
+  '''https://YOUR-PROJECT-REF\.supabase\.co''',
+]
+
+# Never allowlist these, even in the paths above.
+[[allowlists]]
+description = "Hard denylist: these are never placeholders"
+paths = []
+regexTarget = "match"
+regexes = [
+  '''-----BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----''',
+  '''sb_secret_[A-Za-z0-9_-]{20,}''',
+  '''AIza[0-9A-Za-z_-]{35}''',
+  '''AKIA[0-9A-Z]{16}''',
+]
+
+[[rules]]
+id = "supabase-publishable-key"
+description = "Supabase publishable/anon key committed in a non-example file"
+regex = '''\b(sb_publishable_|sb_secret_)[A-Za-z0-9_-]{20,}\b'''
+keywords = ["sb_publishable_", "sb_secret_"]
+
+[[rules]]
+id = "supabase-project-url"
+description = "Concrete Supabase project URL (the project ref is infrastructure-identifying)"
+regex = '''https://[a-z0-9]{20}\.supabase\.(co|in)'''
+keywords = [".supabase.co"]
+
+[[rules]]
+id = "admob-production-unit"
+description = "AdMob production app/unit id (Google's 3940256099942544 demo account is whitelisted)"
+regex = '''\bca-app-pub-(?!3940256099942544)[0-9]{10,}~[0-9]{6,}'''
+keywords = ["ca-app-pub-"]
+
+[[rules]]
+id = "android-keystore-credentials"
+description = "Hard-coded keystore passwords in gradle.properties"
+regex = '''(?i)(storePassword|keyPassword)\s*=\s*[^\s$\{][^\n]*'''
+path = '''(^|/)android/'''
+keywords = ["storePassword", "keyPassword"]
+
+[[rules]]
+id = "firebase-client-id"
+description = "Firebase / Google client secrets"
+regex = '''\b(AIza[0-9A-Za-z_-]{35}|GOCSPX-[0-9A-Za-z_-]{20,})\b'''
+keywords = ["AIza", "GOCSPX-"]

@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# A new push supersedes an in-flight run for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.6"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Credential guard. Runs first and independently: a leaked key must never
+  #    get as far as a build log.
+  # ---------------------------------------------------------------------------
+  guard:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: gitleaks (full history, repo rules)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --config .gitleaks.toml --redact --verbose
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Built-in sweep (works even if the license-free gitleaks build is unavailable)
+        run: ./tool/scan_secrets.sh --history
+
+      - name: .env must not be tracked
+        run: |
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "::error::.env is tracked in git — it must never be committed."
+            exit 1
+          fi
+          echo "ok: .env is untracked"
+
+      - name: No key material in tracked files
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -Eq '(^|/)(key\.properties|google-services\.json|GoogleService-Info\.plist|.*\.(jks|keystore|p12|pem))$'; then
+            echo "::error::key material or keystore is tracked in git."
+            git ls-files | grep -E '(^|/)(key\.properties|google-services\.json|GoogleService-Info\.plist|.*\.(jks|keystore|p12|pem))$'
+            exit 1
+          fi
+          echo "ok: no keystores / signing files tracked"
+
+  # ---------------------------------------------------------------------------
+  # 2. Static analysis + tests on the pinned SDK.
+  # ---------------------------------------------------------------------------
+  quality:
+    name: analyze + test (Flutter ${{ matrix.flutter }})
+    runs-on: ubuntu-latest
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter: ["3.47.6"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter }}
+          channel: stable
+          cache: true
+
+      - name: Create .env from the example (pubspec declares it as an asset)
+        run: cp .env.example .env
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: Dependency versions are pinned
+        run: |
+          if [ -n "$(git diff --name-only pubspec.lock)" ]; then
+            echo "::error::pubspec.lock changed during pub get — commit the lockfile."
+            exit 1
+          fi
+
+      - name: flutter format check
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
+      - name: flutter analyze
+        run: flutter analyze --no-pub
+
+      - name: flutter test
+        run: flutter test --no-pub --reporter expanded
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-flutter-${{ matrix.flutter }}
+          path: |
+            build/test_cache/
+            coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # 3. Release build with credentials injected at compile time — proving the
+  #    key never enters the artifact (nothing is written to .env here).
+  # ---------------------------------------------------------------------------
+  build:
+    name: release apk (no bundled .env)
+    runs-on: ubuntu-latest
+    needs: guard
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.6"
+          channel: stable
+          cache: true
+
+      - name: Write credentials as a define file (never a shell argument)
+        run: |
+          cat > .secrets.json <<'JSON'
+          {
+            "SUPABASE_URL": "https://build-check.supabase.co",
+            "SUPABASE_ANON_KEY": "ci-placeholder-not-a-real-key",
+            "REDIRECT_URL": "io.supabase.example://login-callback",
+            "ADMOB_APP_ID": "ca-app-pub-3940256099942544~3347511713",
+            "ADMOB_BANNER_ID": "ca-app-pub-3940256099942544/6300978111",
+            "ADMOB_REWARDED_ID": "ca-app-pub-3940256099942544/5224354917"
+          }
+          JSON
+          echo "SUPABASE_URL=https://build-check.supabase.co" > .env
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --dart-define-from-file=.secrets.json \
+            --no-pub
+
+      - name: Assert the Supabase URL is NOT in the artifact
+        run: |
+          set -euo pipefail
+          APK=$(ls -1 build/app/outputs/flutter-apk/*.apk | head -1)
+          echo "checking $APK"
+          if unzip -p "$APK" 'assets/flutter_assets/*' 2>/dev/null | strings | grep -q 'build-check.supabase.co'; then
+            echo "::error::credentials leaked into the APK — check SupabaseConfig resolution order."
+            exit 1
+          fi
+          echo "ok: no Supabase URL inside the APK asset bundle"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # 4. Dependency automation for the ecosystems Dependabot supports.
+  # ---------------------------------------------------------------------------
+  # (kept as a separate job purely so it is visible in the checks list)
+  dependabot:
+    name: dependency metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: dependabot.yml present
+        run: test -f .github/dependabot.yml && echo "ok"

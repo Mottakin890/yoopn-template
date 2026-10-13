@@ -1,0 +1,42 @@
+{
+  // Keeps the editor on the same Flutter SDK the CLI and CI use (.fvmrc).
+  "dart.flutterSdkPath": ".fvm/versions/3.47.6",
+
+  // pubspec.yaml + pubspec.lock are the only dependency sources; never let
+  // an editor auto-add an implicit package.
+  "dart.previewFlutterUiGuides": true,
+
+  // Analysis is enforced by `flutter analyze` in pre-commit and CI, so the
+  // editor should surface the same diagnostics — no suppression here.
+  "dart.showDeprecated": true,
+  "dart.strictInference": true,
+  "dart.strictRawTypes": true,
+
+  // Credentials are .env / --dart-define only. Never store them in settings.
+  // (See SECURITY.md — and keep it that way: `git ls-files .env` must be empty.)
+  "files.exclude": {
+    "**/.env": true,
+    "**/build": true,
+    "**/.dart_tool": true,
+    "**/android/key.properties": true
+  },
+
+  "[dart]": {
+    "editor.defaultFormatter": "dart.sdks.dart",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.rulers": [80],
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[dart:json]": {
+    "editor.defaultFormatter": "dart.sdks.dart"
+  }
+}

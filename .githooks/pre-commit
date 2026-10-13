@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# YooPN Templates — git pre-commit hook.
+# Installed by: ./tool/install_hooks.sh  (or: git config core.hooksPath .githooks)
+#
+# Blocks a commit when:
+#   1. a secret pattern matches the staged content (fail closed)
+#   2. flutter analyze would fail
+# Both can be skipped for a WIP commit with:  git commit --no-verify
+set -uo pipefail
+
+RED=$'\033[31m'; YEL=$'\033[33m'; GRN=$'\033[32m'; RST=$'\033[0m'
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HOOK_DIR/.." && pwd)"
+cd "$ROOT" || exit 2
+
+step() { printf '%s==> %s%s\n' "$YEL" "$1" "$RST"; }
+fail() { printf '%sFAIL: %s%s\n' "$RED" "$1" "$RST"; exit 1; }
+
+# --- 1. secrets -------------------------------------------------------------
+step "secret scan (staged)"
+if ! ./tool/scan_secrets.sh --staged; then
+  fail "secret scan found something. Unstage it and move the value to .env / --dart-define. See SECURITY.md."
+fi
+printf '%s    clean%s\n' "$GRN" "$RST"
+
+# --- 2. static analysis -----------------------------------------------------
+if [ "${YOOPN_SKIP_ANALYZE:-0}" = "1" ]; then
+  step "flutter analyze SKIPPED (YOOPN_SKIP_ANALYZE=1)"
+else
+  step "flutter analyze"
+  if command -v flutter >/dev/null 2>&1; then
+    OUT="$(flutter analyze --no-pub 2>&1)" || {
+      printf '%s\n' "$OUT"
+      fail "flutter analyze reported issues."
+    }
+    printf '%s    clean%s\n' "$GRN" "$RST"
+  elif command -v fvm >/dev/null 2>&1; then
+    OUT="$(fvm flutter analyze --no-pub 2>&1)" || {
+      printf '%s\n' "$OUT"
+      fail "flutter analyze reported issues."
+    }
+    printf '%s    clean%s\n' "$GRN" "$RST"
+  else
+    printf '%s    flutter/fvm not on PATH — analysis skipped%s\n' "$YEL" "$RST"
+  fi
+fi
+
+printf '%spre-commit passed%s\n' "$GRN" "$RST"
+exit 0
