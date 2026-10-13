@@ -284,7 +284,12 @@ non-existent project. It is a pure function with its own test suite.
 `service_role` keys are denylisted and must never enter a client build — the
 client uses the publishable key, protected by Row Level Security.
 
-Full policy: [`SECURITY.md`](SECURITY.md).
+Verify the tree yourself at any time:
+
+```sh
+./tool/scan_secrets.sh --history   # full git history
+./tool/scan_secrets.sh             # working tree
+```
 
 ---
 
@@ -338,8 +343,11 @@ All of it is here:
 dart run tool/fetch_snapshot.dart              # refresh bundled relay snapshot
 ```
 
-Engineering reference, architecture contract and known trade-offs:
-[`DEVELOPER.md`](DEVELOPER.md).
+Architecture conventions in one line: dependencies point inward only
+(`presentation → domain ← data`, `core` never imports a feature), repositories
+are contracts in `domain` with implementations in `data`, BLoC is the only
+ViewModel, one class per file in `presentation`, and colour, type and failure
+codes each live in exactly one place.
 
 ---
 
@@ -353,7 +361,7 @@ Engineering reference, architecture contract and known trade-offs:
 | Routes | 10 |
 | Tests | 74 |
 | Design tokens | 25 colour · 29 type |
-| Failure codes | 15, exhaustively typed |
+| Failure codes | 15-member closed set, total resolver |
 | Credentials in tree | **0** |
 
 ---
