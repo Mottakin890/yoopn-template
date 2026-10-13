@@ -9,6 +9,8 @@ import 'package:yoopn_templates/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_bloc.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_state.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/helper/sign_out_action.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/menu_item.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -41,14 +43,7 @@ class MenuScreen extends StatelessWidget {
                     ),
                   ),
                   Spacing.horizontal(4),
-                  Text(
-                    'Menu',
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  Text('Menu', style: AppTextStyles.screenTitleLarge),
                 ],
               ),
             ),
@@ -59,14 +54,7 @@ class MenuScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 22.r,
                     backgroundColor: AppColors.primaryContainer,
-                    child: Text(
-                      initial,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    child: Text(initial, style: AppTextStyles.buttonPrimary),
                   ),
                   Spacing.horizontal(12),
                   Expanded(
@@ -74,11 +62,7 @@ class MenuScreen extends StatelessWidget {
                       email.isEmpty ? 'User profile' : email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.bodyEmphasis,
                     ),
                   ),
                 ],
@@ -89,39 +73,33 @@ class MenuScreen extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                 children: [
-                  _MenuItem(
+                  MenuItem(
                     icon: Icons.dns_rounded,
                     label: 'Servers',
                     trailing: BlocSelector<VpnBloc, VpnState, int>(
                       selector: (s) => s.servers.length,
-                      builder: (_, count) => Text(
-                        '$count',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
+                      builder: (_, count) =>
+                          Text('$count', style: AppTextStyles.labelPrimary),
                     ),
                     onTap: () => context.push(AppPages.servers),
                   ),
-                  _MenuItem(
+                  MenuItem(
                     icon: Icons.manage_accounts_rounded,
                     label: 'Account setup',
                     onTap: () => context.push(AppPages.profile),
                   ),
                   const Divider(),
-                  _MenuItem(
+                  MenuItem(
                     icon: Icons.description_rounded,
                     label: 'Terms & Conditions',
                     onTap: () => context.push(AppPages.terms),
                   ),
-                  _MenuItem(
+                  MenuItem(
                     icon: Icons.shield_rounded,
                     label: 'Safety',
                     onTap: () => context.push(AppPages.safety),
                   ),
-                  _MenuItem(
+                  MenuItem(
                     icon: Icons.info_rounded,
                     label: 'Disclaimer',
                     onTap: () => context.push(AppPages.disclaimer),
@@ -139,14 +117,7 @@ class MenuScreen extends StatelessWidget {
                     Icons.logout_rounded,
                     color: AppColors.error,
                   ),
-                  label: Text(
-                    'Log out',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.error,
-                    ),
-                  ),
+                  label: Text('Log out', style: AppTextStyles.errorAction),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     side: BorderSide(
@@ -162,49 +133,12 @@ class MenuScreen extends StatelessWidget {
             Center(
               child: Padding(
                 padding: EdgeInsets.only(bottom: 16.h),
-                child: Text(
-                  'by VIS Softs',
-                  style: TextStyle(fontSize: 12.sp, color: AppColors.textHint),
-                ),
+                child: Text('by VIS Softs', style: AppTextStyles.labelHint),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MenuItem extends StatelessWidget {
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      trailing:
-          trailing ??
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-      onTap: onTap,
     );
   }
 }

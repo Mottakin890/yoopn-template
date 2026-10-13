@@ -27,8 +27,6 @@ import 'package:yoopn_templates/features/splash/presentation/bloc/splash_bloc.da
 final GetIt sl = GetIt.instance;
 
 Future<void> initDependencyInjection() async {
-  // Idempotent: hot-restart and tests may call twice; GetIt throws on
-  // duplicate registration.
   if (sl.isRegistered<SupabaseClient>()) {
     AppLogger.d('DI', 'already registered — skipping');
     return;

@@ -34,8 +34,6 @@ class SqfliteVpnLocalDataSource implements VpnLocalDataSource {
 
   Database? _db;
 
-  /// Memoized open future: concurrent first calls join one openDatabase
-  /// instead of opening twice and leaking the extra handle.
   Future<Database>? _opening;
 
   Future<Database> _open() async {
@@ -149,7 +147,7 @@ CREATE TABLE $tableMeta (
       AppLogger.i('CACHE', 'cacheServers done (${json.length} rows)');
     } catch (e, st) {
       AppLogger.e('CACHE', 'cacheServers failed', e, st);
-      throw VpnException('cache-write', 'Could not save servers offline.', e);
+      throw VpnException(VpnFailureCode.cacheWrite, cause: e);
     }
   }
 
@@ -191,7 +189,7 @@ CREATE TABLE $tableMeta (
       return rows.map((r) => Map<String, dynamic>.from(r)).toList();
     } catch (e, st) {
       AppLogger.e('CACHE', 'loadCachedJson failed', e, st);
-      throw VpnException('cache-read', 'Could not load saved servers.', e);
+      throw VpnException(VpnFailureCode.cacheRead, cause: e);
     }
   }
 

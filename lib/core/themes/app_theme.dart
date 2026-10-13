@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_text_styles.dart';
 
 class AppTheme {
   AppTheme._();
@@ -43,6 +44,21 @@ class AppTheme {
       fontFamily: 'Inter',
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
+
+      textTheme: TextTheme(
+        displayLarge: AppTextStyles.displayLarge,
+        headlineLarge: AppTextStyles.screenTitleLarge,
+        headlineMedium: AppTextStyles.screenTitleMedium,
+        headlineSmall: AppTextStyles.displayLargeTight,
+        titleLarge: AppTextStyles.titleLarge,
+        titleMedium: AppTextStyles.titleMedium,
+        bodyLarge: AppTextStyles.bodyEmphasis,
+        bodyMedium: AppTextStyles.bodyMedium,
+        bodySmall: AppTextStyles.bodySmall,
+        labelLarge: AppTextStyles.buttonOnPrimary,
+        labelMedium: AppTextStyles.labelSecondary,
+        labelSmall: AppTextStyles.caption,
+      ),
 
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
@@ -125,13 +141,13 @@ class AppTheme {
       ),
 
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.all(Colors.white),
+        thumbColor: WidgetStateProperty.all(AppColors.onPrimary),
         trackColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
               ? AppColors.primary
               : AppColors.border,
         ),
-        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+        trackOutlineColor: WidgetStateProperty.all(AppColors.transparent),
       ),
 
       navigationBarTheme: NavigationBarThemeData(
@@ -164,7 +180,7 @@ class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.secondary,
-        contentTextStyle: const TextStyle(color: Colors.white),
+        contentTextStyle: const TextStyle(color: AppColors.onSecondary),
         behavior: SnackBarBehavior.floating,
         shape: shape,
       ),

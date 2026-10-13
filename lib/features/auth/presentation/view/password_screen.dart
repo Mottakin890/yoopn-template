@@ -86,7 +86,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
             ),
             onPressed: () => context.pop(),
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           elevation: 0,
         ),
         body: SafeArea(

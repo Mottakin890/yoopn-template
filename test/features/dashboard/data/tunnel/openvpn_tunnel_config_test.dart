@@ -27,17 +27,18 @@ void main() {
   group('failure codes surfaced to the user', () {
     test('bad config has a retry-oriented message', () {
       const failure = VpnException(
-        'bad-config',
-        'This server has no OpenVPN config. Pick a live VPNGate relay.',
+        VpnFailureCode.badConfig,
+        detail: 'This server has no OpenVPN config. Pick a live VPNGate relay.',
       );
-      expect(VpnFailure.from(failure).code, 'bad-config');
-      expect(VpnFailure.from(failure).message, contains('live VPNGate relay'));
+      expect(resolveVpnFailureCode(failure), VpnFailureCode.badConfig);
+      expect(vpnFailureMessage(failure), contains('live VPNGate relay'));
     });
 
     test('cancel is a distinct, non-fatal code', () {
-      const cancelled = VpnException('cancelled', 'Connection cancelled.');
-      expect(VpnFailure.from(cancelled).code, 'cancelled');
-      expect(VpnFailure.from(cancelled).code, isNot('unknown'));
+      const cancelled = VpnException(VpnFailureCode.cancelled);
+      expect(resolveVpnFailureCode(cancelled), VpnFailureCode.cancelled);
+      expect(resolveVpnFailureCode(cancelled), isNot(VpnFailureCode.unknown));
+      expect(vpnFailureMessage(cancelled), 'Connection cancelled.');
     });
   });
 }

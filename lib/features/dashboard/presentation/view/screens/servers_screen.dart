@@ -15,6 +15,7 @@ import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_bloc.da
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_event.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_state.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/helper/vpn_status.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class ServersScreen extends StatefulWidget {
   const ServersScreen({super.key});
@@ -27,9 +28,6 @@ class _ServersScreenState extends State<ServersScreen> {
   final _searchController = TextEditingController();
   String _query = '';
 
-  /// Serializes taps while a selection (possibly through the 30s ad gate)
-  /// is in flight: without this, rapid taps on A then B interleave counter
-  /// reads and the second selection bypasses the gate.
   bool _busy = false;
 
   @override
@@ -57,14 +55,8 @@ class _ServersScreenState extends State<ServersScreen> {
         ),
         title: BlocSelector<VpnBloc, VpnState, int>(
           selector: (s) => s.servers.length,
-          builder: (_, count) => Text(
-            'Servers ($count)',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
+          builder: (_, count) =>
+              Text('Servers ($count)', style: AppTextStyles.screenTitleMedium),
         ),
         actions: [
           BlocSelector<VpnBloc, VpnState, bool>(
@@ -116,10 +108,7 @@ class _ServersScreenState extends State<ServersScreen> {
                       _query.isEmpty
                           ? 'No servers available.'
                           : 'No servers match "$_query"',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTextStyles.bodySmall,
                     ),
                   );
                 }
@@ -168,14 +157,11 @@ class _ServersScreenState extends State<ServersScreen> {
                         child: ListTile(
                           leading: Text(
                             server.flag,
-                            style: TextStyle(fontSize: 24.sp),
+                            style: AppTextStyles.serverFlag,
                           ),
                           title: Text(
                             server.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: AppTextStyles.emphasisStrong,
                           ),
                           subtitle: Text(
                             server.isVpnGate
@@ -183,10 +169,7 @@ class _ServersScreenState extends State<ServersScreen> {
                                       '${server.pingText} • ${server.speedText} • '
                                       '${server.sessions} sessions'
                                 : 'Built-in server',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTextStyles.overlinePlain,
                           ),
                           isThreeLine: server.isVpnGate,
                           trailing: selected
@@ -235,9 +218,7 @@ class _ServersScreenState extends State<ServersScreen> {
         if (!context.mounted) return;
         await showAdGate(context, title: 'Changing server…');
         if (!context.mounted || bloc.isClosed) return;
-        // Re-validate: the tunnel may have connected during the 30s gate,
-        // in which case selection is (correctly) a no-op in the bloc — but
-        // don't pop the page out from under a connecting tunnel either.
+
         if (bloc.state.status != VpnStatus.disconnected) return;
       }
       if (bloc.isClosed) return;

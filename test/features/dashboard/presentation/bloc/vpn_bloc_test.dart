@@ -195,8 +195,8 @@ void main() {
       );
 
       repository.connectError = const VpnException(
-        'timeout',
-        'Stuck at "assign_ip"',
+        VpnFailureCode.timeout,
+        detail: 'Stuck at "assign_ip"',
       );
       bloc.add(const VpnToggled());
       final failed = await bloc.stream.firstWhere(
@@ -393,7 +393,10 @@ void main() {
         (s) => s.serversStatus == VpnServersStatus.loaded,
       );
 
-      repository.connectError = const VpnException('timeout', 'too slow');
+      repository.connectError = const VpnException(
+        VpnFailureCode.timeout,
+        detail: 'too slow',
+      );
       bloc.add(const VpnToggled());
       await bloc.stream.firstWhere((s) => s.errorMessage != null);
       expect(repository.connectCalls, 1);

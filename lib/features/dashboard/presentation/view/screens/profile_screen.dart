@@ -10,6 +10,9 @@ import 'package:yoopn_templates/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_bloc.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_state.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/helper/vpn_status.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/action_tile.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/info_tile.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -61,11 +64,7 @@ class ProfileScreen extends StatelessWidget {
                     Spacing.horizontal(4),
                     Text(
                       'Account setup',
-                      style: TextStyle(
-                        fontSize: 26.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.displayLargeTight,
                     ),
                   ],
                 ),
@@ -93,11 +92,7 @@ class ProfileScreen extends StatelessWidget {
                         headline,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                        style: AppTextStyles.buttonOnPrimary,
                       ),
                       if (hasName && email.isNotEmpty) ...[
                         Spacing.vertical(4),
@@ -105,17 +100,14 @@ class ProfileScreen extends StatelessWidget {
                           email,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
-                          ),
+                          style: AppTextStyles.labelSecondary,
                         ),
                       ],
                     ],
                   ),
                 ),
                 Spacing.vertical(28),
-                _InfoTile(
+                InfoTile(
                   icon: Icons.email_rounded,
                   label: 'Email',
                   value: email.isEmpty ? 'No email available' : email,
@@ -141,7 +133,7 @@ class ProfileScreen extends StatelessWidget {
                         : '${server.flag} ${server.name}';
                     return Column(
                       children: [
-                        _InfoTile(
+                        InfoTile(
                           icon: Icons.privacy_tip_rounded,
                           label: 'Protection',
                           value: protection,
@@ -150,7 +142,7 @@ class ProfileScreen extends StatelessWidget {
                               : AppColors.textPrimary,
                         ),
                         Spacing.vertical(12),
-                        _InfoTile(
+                        InfoTile(
                           icon: Icons.language_rounded,
                           label: 'Region',
                           value: region,
@@ -160,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
                   },
                 ),
                 Spacing.vertical(12),
-                _ActionTile(
+                ActionTile(
                   icon: Icons.badge_rounded,
                   label: 'Change name',
                   value: (dn != null && dn.isNotEmpty)
@@ -178,7 +170,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 Spacing.vertical(12),
-                _ActionTile(
+                ActionTile(
                   icon: Icons.edit_rounded,
                   label: 'Change email',
                   value: 'Verification link goes to the new address',
@@ -194,7 +186,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 Spacing.vertical(12),
-                _ActionTile(
+                ActionTile(
                   icon: Icons.lock_rounded,
                   label: 'Change password',
                   value: 'At least 6 characters',
@@ -232,13 +224,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(title, style: AppTextStyles.dialogTitle),
         content: TextField(
           controller: controller,
           keyboardType: keyboard,
@@ -254,10 +240,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            child: Text('Cancel', style: AppTextStyles.secondary),
           ),
           ElevatedButton(
             onPressed: () {
@@ -268,142 +251,6 @@ class ProfileScreen extends StatelessWidget {
             child: const Text('Save'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(icon, color: AppColors.primary),
-          ),
-          Spacing.horizontal(12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                Spacing.vertical(4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: valueColor ?? AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16.r),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.all(16.r),
-          child: Row(
-            children: [
-              Container(
-                width: 40.w,
-                height: 40.h,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Icon(icon, color: AppColors.primary),
-              ),
-              Spacing.horizontal(12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    Spacing.vertical(4),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textHint,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

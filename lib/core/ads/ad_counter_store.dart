@@ -62,7 +62,6 @@ class SqfliteAdCounterStore implements AdCounterStore {
 
   @override
   Future<void> incrementServerChangeCount() async {
-    // Single-statement upsert: atomic, no lost update under concurrency.
     try {
       final db = await _open();
       await db.rawInsert(

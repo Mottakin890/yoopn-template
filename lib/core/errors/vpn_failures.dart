@@ -1,61 +1,71 @@
+import 'dart:async';
+
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 
-class VpnException implements Exception {
-  const VpnException(this.code, this.message, [this.cause]);
+enum VpnFailureCode {
+  network('No connection. Showing saved servers.'),
+  timeout('This relay is too slow. Try another server.'),
+  cancelled('Connection cancelled.'),
+  permissionDenied(
+    'VPN permission denied. Allow the VPN request and try again.',
+  ),
+  unsupported('Real VPN is only available on Android/iOS.'),
+  authRejected('This relay rejected the login. Try another server.'),
+  badConfig('This server has no usable VPN config. Pick a live relay.'),
+  busy('A connection attempt is already running. Please wait.'),
+  connectFailed('Could not connect. Try another server.'),
+  engineInitFailed('Could not start the VPN engine.'),
+  unreachable('VPNGate is unreachable. Tap Retry.'),
+  cacheRead('Could not load saved servers.'),
+  cacheWrite('Could not save servers offline.'),
+  serverUnavailable('Selected VPN server is unavailable. Refresh the list.'),
+  unknown('Something went wrong. Please try again.');
 
-  final String code;
+  const VpnFailureCode(this.message);
+
   final String message;
-  final Object? cause;
-
-  @override
-  String toString() => 'VpnException($code): $message';
 }
 
-class VpnFailure {
-  const VpnFailure(this.code, this.message);
+class VpnException implements Exception {
+  const VpnException(this.code, {this.cause, this.detail});
 
-  final String code;
-  final String message;
+  final VpnFailureCode code;
+  final Object? cause;
 
-  static const network = VpnFailure(
-    'network',
-    'No connection. Showing saved servers.',
-  );
-  static const server = VpnFailure(
-    'server',
-    'VPNGate is unreachable right now. Showing saved servers.',
-  );
-  static const cacheEmpty = VpnFailure(
-    'cache-empty',
-    'No saved servers yet. Connect to the internet and refresh.',
-  );
-  static const unknown = VpnFailure(
-    'unknown',
-    'Something went wrong. Please try again.',
-  );
+  final String? detail;
 
-  factory VpnFailure.from(Object error) {
-    final mapped = _map(error);
-    AppLogger.w(
-      'VPN',
-      'failure mapped ${error.runtimeType} → ${mapped.code}: ${mapped.message}',
-    );
-    return mapped;
-  }
-
-  static VpnFailure _map(Object error) {
-    if (error is VpnFailure) return error;
-    if (error is VpnException) return VpnFailure(error.code, error.message);
-    final text = error.toString();
-    if (text.contains('VPNGate request failed') ||
-        text.contains('SocketException') ||
-        text.contains('Connection closed') ||
-        text.contains('TimeoutException')) {
-      return VpnFailure.network;
-    }
-    return VpnFailure.unknown;
-  }
+  String get message => detail ?? code.message;
 
   @override
-  String toString() => message;
+  String toString() => 'VpnException(${code.name})';
+}
+
+const Set<String> _transportTypeNames = {
+  'SocketException',
+  'HttpException',
+  'HandshakeException',
+  'TlsException',
+  'ConnectionResetException',
+  'ProtocolException',
+  'CertException',
+};
+
+VpnFailureCode resolveVpnFailureCode(Object error) {
+  if (error is VpnException) return error.code;
+  if (error is TimeoutException) return VpnFailureCode.timeout;
+  if (error is FormatException) return VpnFailureCode.cacheRead;
+  if (_transportTypeNames.contains(error.runtimeType.toString())) {
+    return VpnFailureCode.network;
+  }
+  return VpnFailureCode.unknown;
+}
+
+String vpnFailureMessage(Object error) => error is VpnException
+    ? error.message
+    : resolveVpnFailureCode(error).message;
+
+VpnException mapVpnException(Object error, {required String source}) {
+  final code = resolveVpnFailureCode(error);
+  AppLogger.w('VPN', '$source mapped ${error.runtimeType} → ${code.name}');
+  return VpnException(code, cause: error);
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:yoopn_templates/core/errors/vpn_failures.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 
 import '../../domain/entities/vpn_server.dart';
@@ -39,8 +40,6 @@ class VpnGateRemoteDataSourceImpl implements VpnGateRemoteDataSource {
   List<VpnServer>? _serverCache;
   DateTime? _fetchedAt;
 
-  /// In-flight dedup per kind: concurrent plain/forced fetches join instead
-  /// of stampeding the network + isolate parser.
   Future<List<Map<String, dynamic>>>? _jsonInflight;
   Future<List<Map<String, dynamic>>>? _jsonInflightForced;
 
@@ -93,7 +92,6 @@ class VpnGateRemoteDataSourceImpl implements VpnGateRemoteDataSource {
     }
   }
 
-  /// Network + isolate parse + cache commit. Single flight per kind.
   Future<List<Map<String, dynamic>>> _fetchAndParse() async {
     final netSw = Stopwatch()..start();
     final csv = await _fetchRawCsv();
@@ -183,12 +181,27 @@ class VpnGateRemoteDataSourceImpl implements VpnGateRemoteDataSource {
         );
         final detail =
             e.message ?? e.error?.toString() ?? 'Failed to reach VPNGate';
-        lastError = Exception('VPNGate request failed: $detail');
+        lastError = VpnException(
+          _codeFor(e),
+          cause: e,
+          detail: 'VPNGate request failed: $detail',
+        );
         if (attempt < _attempts - 1) {
           await Future<void>.delayed(Duration(seconds: attempt + 1));
         }
       }
     }
-    throw lastError ?? Exception('VPNGate request failed');
+    throw lastError ??
+        const VpnException(
+          VpnFailureCode.network,
+          detail: 'VPNGate request failed',
+        );
   }
+
+  static VpnFailureCode _codeFor(DioException e) => switch (e.type) {
+    DioExceptionType.connectionTimeout ||
+    DioExceptionType.sendTimeout ||
+    DioExceptionType.receiveTimeout => VpnFailureCode.timeout,
+    _ => VpnFailureCode.network,
+  };
 }

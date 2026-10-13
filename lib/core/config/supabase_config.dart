@@ -93,8 +93,6 @@ class SupabaseConfig {
     return null;
   }
 
-  /// Values copied straight out of `.env.example` fail fast with an
-  /// actionable message instead of a confusing DNS/auth error at runtime.
   static String _require(String name, String? value) {
     if (looksLikePlaceholder(value)) {
       final where = _loaded ? _source! : 'nowhere (config not loaded)';

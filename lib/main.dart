@@ -12,6 +12,7 @@ import 'package:yoopn_templates/core/ads/ad_config.dart';
 import 'package:yoopn_templates/core/ads/rewarded_ad_manager.dart';
 import 'package:yoopn_templates/core/config/supabase_config.dart';
 import 'package:yoopn_templates/core/telemetry/supabase_telemetry.dart';
+import 'package:yoopn_templates/core/themes/app_colors.dart';
 import 'package:yoopn_templates/core/utils/app_bloc_observer.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 import 'package:yoopn_templates/core/utils/dependency_injection.dart';
@@ -120,7 +121,7 @@ Future<void> _init() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: AppColors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
     ),

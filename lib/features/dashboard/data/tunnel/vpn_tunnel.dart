@@ -35,8 +35,6 @@ class SimulatedVpnTunnel implements VpnTunnel {
   VpnTunnelStatus _status = VpnTunnelStatus.disconnected;
   String _stageText = '';
 
-  /// Monotonic token: disconnect() bumps it so a superseded connect() can
-  /// never emit `connected` afterwards.
   int _attempt = 0;
 
   @override
@@ -66,8 +64,9 @@ class SimulatedVpnTunnel implements VpnTunnel {
     if (server.isVpnGate && server.decodedOpenVpnConfig.isEmpty) {
       AppLogger.w('TUNNEL', 'bad OpenVPN config for ${server.id}');
       throw const VpnException(
-        'bad-config',
-        'This relay has an unreadable OpenVPN config. Pick another server.',
+        VpnFailureCode.badConfig,
+        detail:
+            'This relay has an unreadable OpenVPN config. Pick another server.',
       );
     }
     _emit(VpnTunnelStatus.connecting);

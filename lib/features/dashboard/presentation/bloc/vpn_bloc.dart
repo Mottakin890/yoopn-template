@@ -116,7 +116,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
         } catch (error, st) {
           AppLogger.e('VPN', 'disconnect failed', error, st);
           if (!isClosed) {
-            emit(state.copyWith(errorMessage: VpnFailure.from(error).message));
+            emit(state.copyWith(errorMessage: vpnFailureMessage(error)));
           }
         }
         return;
@@ -171,15 +171,13 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
       final server = useCases.selectVpnServer(state.server);
       AppLogger.d('VPN', 'resolved server → ${server?.id ?? 'null'}');
       if (server == null) {
-        throw const VpnException(
-          'no-server',
-          'Selected VPN server is unavailable. Refresh the list.',
-        );
+        throw const VpnException(VpnFailureCode.serverUnavailable);
       }
       if (!server.isVpnGate) {
         throw VpnException(
-          'bad-config',
-          '“${server.name}” is a built-in placeholder with no VPN config. Open Location, refresh, and pick a live relay showing host/IP.',
+          VpnFailureCode.badConfig,
+          detail:
+              '“${server.name}” is a built-in placeholder with no VPN config. Open Location, refresh, and pick a live relay showing host/IP.',
         );
       }
       await useCases.connectVpn(server);
@@ -204,7 +202,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
       );
     } catch (error, st) {
       _connectInFlight = false;
-      if (error is VpnException && error.code == 'cancelled') {
+      if (error is VpnException && error.code == VpnFailureCode.cancelled) {
         AppLogger.i('VPN', 'connect cancelled by user');
         if (!isClosed) emit(state.copyWith(status: VpnStatus.disconnected));
         return;
@@ -221,7 +219,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
         emit(
           state.copyWith(
             status: VpnStatus.disconnected,
-            errorMessage: VpnFailure.from(error).message,
+            errorMessage: vpnFailureMessage(error),
           ),
         );
       }
@@ -330,7 +328,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
       emit(
         state.copyWith(
           serversStatus: VpnServersStatus.failure,
-          serversError: VpnFailure.from(error).message,
+          serversError: vpnFailureMessage(error),
           servers: state.servers.isEmpty
               ? VpnServer.availableServers
               : state.servers,
@@ -350,9 +348,6 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     Emitter<VpnState> emit,
     List<VpnServer> servers,
   ) async {
-    // Never move the selection while a tunnel is up or handshaking: the
-    // list may refresh, but connect() shook hands with (and telemetry
-    // logged) the server selected at tap time.
     final pinned = state.status != VpnStatus.disconnected;
     var selectedId = state.server;
     if (!_userPickedServer) {
@@ -426,7 +421,7 @@ class VpnBloc extends Bloc<VpnEvent, VpnState> {
     emit(
       state.copyWith(
         serversStatus: VpnServersStatus.failure,
-        serversError: VpnFailure.from(event.error).message,
+        serversError: vpnFailureMessage(event.error),
         servers: state.servers,
       ),
     );

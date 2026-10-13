@@ -32,4 +32,7 @@ class AppColors {
   static const Color connected = success;
   static const Color connecting = warning;
   static const Color disconnected = Color(0xFF9CA3AF);
+
+  static const Color shadow = Color(0xFF000000);
+  static const Color transparent = Color(0x00000000);
 }

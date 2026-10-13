@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yoopn_templates/core/dimentions/spacings.dart';
 import 'package:yoopn_templates/core/themes/app_colors.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class InfoScreen extends StatelessWidget {
   const InfoScreen({super.key, required this.title, required this.sections});
@@ -37,34 +38,16 @@ class InfoScreen extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.screenTitleLarge,
                     ),
                   ),
                 ],
               ),
               Spacing.vertical(12),
               for (final (heading, body) in sections) ...[
-                Text(
-                  heading,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                Text(heading, style: AppTextStyles.titleMedium),
                 Spacing.vertical(6),
-                Text(
-                  body,
-                  style: TextStyle(
-                    fontSize: 13.5.sp,
-                    height: 1.5,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(body, style: AppTextStyles.bodyMedium),
                 Spacing.vertical(14),
               ],
             ],

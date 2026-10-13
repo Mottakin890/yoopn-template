@@ -56,7 +56,11 @@ void main() {
       await expectLater(
         tunnel.connect(_relay(config: '!!!not-base64!!!')),
         throwsA(
-          isA<VpnException>().having((e) => e.code, 'code', 'bad-config'),
+          isA<VpnException>().having(
+            (e) => e.code,
+            'code',
+            VpnFailureCode.badConfig,
+          ),
         ),
       );
       expect(tunnel.currentStatus, VpnTunnelStatus.disconnected);

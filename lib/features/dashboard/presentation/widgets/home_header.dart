@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yoopn_templates/core/routes/app_pages.dart';
 import 'package:yoopn_templates/core/themes/app_colors.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -11,14 +11,7 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          'YooPN',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        Text('YooPN', style: AppTextStyles.screenTitleMedium),
         const Spacer(),
         IconButton(
           tooltip: 'Menu',

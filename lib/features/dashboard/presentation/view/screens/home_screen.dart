@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:yoopn_templates/core/dimentions/spacings.dart';
 import 'package:yoopn_templates/core/ads/ad_carousel_widget.dart';
-import 'package:yoopn_templates/core/themes/app_colors.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/widgets/connect_button.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/free_title.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/widgets/home_header.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/widgets/status_panel.dart';
 
@@ -28,7 +28,7 @@ class HomeScreen extends StatelessWidget {
                   Spacing.vertical(12),
                   const Center(child: AdCarouselWidget()),
                   Spacing.vertical(12),
-                  const _FreeTitle(),
+                  const FreeTitle(),
                   Spacing.vertical(20),
                   const ConnectButton(),
                   Spacing.vertical(12),
@@ -39,24 +39,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _FreeTitle extends StatelessWidget {
-  const _FreeTitle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'YooPN+',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 60.sp,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 2,
-        color: AppColors.primary,
       ),
     );
   }

@@ -91,9 +91,9 @@ class OpenVpnTunnel implements VpnTunnel {
     } catch (e, st) {
       AppLogger.e('TUNNEL', 'OpenVPN.initialize failed', e, st);
       throw VpnException(
-        'init-failed',
-        'Could not start the VPN engine: $e',
-        e,
+        VpnFailureCode.engineInitFailed,
+        cause: e,
+        detail: 'Could not start the VPN engine: $e',
       );
     }
   }
@@ -197,8 +197,8 @@ class OpenVpnTunnel implements VpnTunnel {
       if (stage == VPNStage.unknown && authRejected) {
         c.completeError(
           const VpnException(
-            'auth-rejected',
-            'This relay rejected the login (it may be full or offline). Try another server.',
+            VpnFailureCode.authRejected,
+            detail: 'This relay rejected the login (it may be full or offline). Try another server.',
           ),
         );
       } else if (isIdleSignal) {
@@ -214,16 +214,17 @@ class OpenVpnTunnel implements VpnTunnel {
           case VPNStage.denied:
             c.completeError(
               const VpnException(
-                'permission-denied',
-                'VPN permission denied. Allow the VPN request and try again.',
+                VpnFailureCode.permissionDenied,
+                detail: 'VPN permission denied. Allow the VPN request and try again.',
               ),
             );
             break;
           case VPNStage.error:
             c.completeError(
               VpnException(
-                'connect-failed',
-                'VPN connection failed ($displayRaw). Try another server.',
+                VpnFailureCode.connectFailed,
+                detail:
+                    'VPN connection failed ($displayRaw). Try another server.',
               ),
             );
             break;
@@ -241,8 +242,9 @@ class OpenVpnTunnel implements VpnTunnel {
             }
             c.completeError(
               VpnException(
-                'connect-failed',
-                'VPN dropped during connect ($displayRaw). Try another server.',
+                VpnFailureCode.connectFailed,
+                detail:
+                    'VPN dropped during connect ($displayRaw). Try another server.',
               ),
             );
             break;
@@ -277,16 +279,16 @@ class OpenVpnTunnel implements VpnTunnel {
     );
     if (kIsWeb) {
       throw const VpnException(
-        'unsupported',
-        'Real VPN is only available on Android/iOS.',
+        VpnFailureCode.unsupported,
+        detail: 'Real VPN is only available on Android/iOS.',
       );
     }
     final rawConfig = server.decodedOpenVpnConfig;
     if (!server.isVpnGate || rawConfig.isEmpty) {
       AppLogger.w('TUNNEL', 'no usable OpenVPN config for ${server.id}');
       throw const VpnException(
-        'bad-config',
-        'This server has no OpenVPN config. Pick a live VPNGate relay.',
+        VpnFailureCode.badConfig,
+        detail: 'This server has no OpenVPN config. Pick a live VPNGate relay.',
       );
     }
 
@@ -298,8 +300,9 @@ class OpenVpnTunnel implements VpnTunnel {
         AppLogger.i('TUNNEL', 'android VPN permission granted=$granted');
         if (!granted) {
           throw const VpnException(
-            'permission-denied',
-            'VPN permission denied. Allow the VPN request and try again.',
+            VpnFailureCode.permissionDenied,
+            detail:
+                'VPN permission denied. Allow the VPN request and try again.',
           );
         }
       } catch (e) {
@@ -319,8 +322,8 @@ class OpenVpnTunnel implements VpnTunnel {
 
     if (_connectActive) {
       throw const VpnException(
-        'busy',
-        'A connection attempt is already running. Please wait.',
+        VpnFailureCode.busy,
+        detail: 'A connection attempt is already running. Please wait.',
       );
     }
     _connectActive = true;
@@ -346,7 +349,10 @@ class OpenVpnTunnel implements VpnTunnel {
           );
           return;
         } on VpnException catch (e) {
-          if (e.code == 'cancelled' || e.code == 'permission-denied') rethrow;
+          if (e.code == VpnFailureCode.cancelled ||
+              e.code == VpnFailureCode.permissionDenied) {
+            rethrow;
+          }
           lastError = e;
           AppLogger.w(
             'TUNNEL',
@@ -354,14 +360,14 @@ class OpenVpnTunnel implements VpnTunnel {
           );
           _teardown();
           if (_cancelRequested) {
-            throw const VpnException('cancelled', 'Connection cancelled.');
+            throw const VpnException(VpnFailureCode.cancelled);
           }
         }
       }
       throw lastError ??
           const VpnException(
-            'connect-failed',
-            'Could not connect. Try another server.',
+            VpnFailureCode.connectFailed,
+            detail: 'Could not connect. Try another server.',
           );
     } finally {
       _connectActive = false;
@@ -408,9 +414,9 @@ class OpenVpnTunnel implements VpnTunnel {
                 if (c != null && !c.isCompleted && !_cancelRequested) {
                   c.completeError(
                     VpnException(
-                      'connect-failed',
-                      'Could not start VPN: $e',
-                      e,
+                      VpnFailureCode.connectFailed,
+                      cause: e,
+                      detail: 'Could not start VPN: $e',
                     ),
                   );
                 }
@@ -421,7 +427,11 @@ class OpenVpnTunnel implements VpnTunnel {
       AppLogger.e('TUNNEL', 'engine.connect threw synchronously', e, st);
       _teardown();
       _emit(VpnTunnelStatus.error);
-      throw VpnException('connect-failed', 'Could not start VPN: $e', e);
+      throw VpnException(
+        VpnFailureCode.connectFailed,
+        cause: e,
+        detail: 'Could not start VPN: $e',
+      );
     }
     _startPolling();
 
@@ -433,7 +443,7 @@ class OpenVpnTunnel implements VpnTunnel {
       await _connectCompleter!.future.timeout(timeout);
       if (_cancelRequested) {
         AppLogger.i('TUNNEL', 'connect cancelled while waiting');
-        throw const VpnException('cancelled', 'Connection cancelled.');
+        throw const VpnException(VpnFailureCode.cancelled);
       }
     } on TimeoutException catch (e) {
       String last = _lastRawStage;
@@ -448,9 +458,10 @@ class OpenVpnTunnel implements VpnTunnel {
       _teardown();
       _emit(VpnTunnelStatus.error);
       throw VpnException(
-        'timeout',
-        'Stuck at "$last" — this relay is too slow. Try another server.',
-        e,
+        VpnFailureCode.timeout,
+        cause: e,
+        detail:
+            'Stuck at "$last" — this relay is too slow. Try another server.',
       );
     } finally {
       _stopPolling();
@@ -531,8 +542,7 @@ class OpenVpnTunnel implements VpnTunnel {
       final gen = _generation;
       try {
         final stage = await _engine.stage().timeout(const Duration(seconds: 4));
-        // Tick started before a disconnect/reconnect: stale, ignore so it
-        // can never resurrect status after disconnect().
+
         if (gen != _generation || _cancelRequested) return;
         final elapsed = _connectStartedAt == null
             ? '?'
@@ -570,9 +580,7 @@ class OpenVpnTunnel implements VpnTunnel {
     _generation++;
     final c = _connectCompleter;
     if (c != null && !c.isCompleted) {
-      // Error, not success: waiters must observe cancellation, never a
-      // phantom connect-ok.
-      c.completeError(const VpnException('cancelled', 'Connection cancelled.'));
+      c.completeError(const VpnException(VpnFailureCode.cancelled));
     }
     _connectCompleter = null;
     _stageText = '';

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:yoopn_templates/core/dimentions/spacings.dart';
 import 'package:yoopn_templates/core/ads/rewarded_ad_manager.dart';
 import 'package:yoopn_templates/core/themes/app_colors.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 const Duration kAdGateDuration = Duration(seconds: 30);
 
@@ -16,7 +17,6 @@ Future<void> showAdGate(
   required String title,
   String subtitle = 'Your request continues when the video finishes',
 }) {
-  // Concurrent callers JOIN the in-flight gate instead of bypassing it.
   final flight = _gateFlight;
   if (flight != null) return flight;
   final future = _runGate(context, title: title, subtitle: subtitle);
@@ -105,43 +105,22 @@ class _AdGateDialogState extends State<_AdGateDialog> {
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
-                child: Text(
-                  'AD',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                child: Text('AD', style: AppTextStyles.overline),
               ),
               Spacing.vertical(16),
               Text(
                 widget.title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTextStyles.titleLarge,
               ),
               Spacing.vertical(6),
               Text(
                 widget.subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.labelSecondary,
               ),
               Spacing.vertical(20),
-              Text(
-                '$_remaining s',
-                style: TextStyle(
-                  fontSize: 40.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
-              ),
+              Text('$_remaining s', style: AppTextStyles.brandDisplay),
               Spacing.vertical(12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.r),

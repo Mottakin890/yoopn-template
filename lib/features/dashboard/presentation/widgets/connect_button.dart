@@ -11,9 +11,8 @@ import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_bloc.da
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_event.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_state.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/helper/vpn_status.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
-/// Serializes taps while the 30s ad gate is open: without this, rapid taps
-/// enqueue two toggles (connect, then instant disconnect).
 bool _gateBusy = false;
 
 class ConnectButton extends StatelessWidget {
@@ -63,8 +62,7 @@ class ConnectButton extends StatelessWidget {
                     title: turningOn ? 'Connecting VPN…' : 'Disconnecting…',
                   );
                   if (!context.mounted || bloc.isClosed) return;
-                  // Skip if something else (sign-out, tunnel sync) already
-                  // moved the state during the 30s gate.
+
                   if (bloc.state.status != expect) return;
                   bloc.add(const VpnToggled());
                 } finally {
@@ -102,9 +100,7 @@ class ConnectButton extends StatelessWidget {
                           Spacing.horizontal(12),
                           Text(
                             'OFF',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
+                            style: AppTextStyles.switchLabel.copyWith(
                               color: connected
                                   ? AppColors.onPrimary.withValues(alpha: 0.65)
                                   : AppColors.primary,
@@ -113,9 +109,7 @@ class ConnectButton extends StatelessWidget {
                           const Spacer(),
                           Text(
                             'ON',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w800,
+                            style: AppTextStyles.switchLabel.copyWith(
                               color: connected
                                   ? AppColors.onPrimary
                                   : AppColors.textHint,
@@ -149,7 +143,7 @@ class ConnectButton extends StatelessWidget {
                                 ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(
+                              color: AppColors.shadow.withValues(
                                 alpha: connected ? 0.22 : 0.1,
                               ),
                               blurRadius: 8,

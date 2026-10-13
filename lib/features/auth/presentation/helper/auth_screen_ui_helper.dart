@@ -8,6 +8,7 @@ import 'package:yoopn_templates/core/themes/app_colors.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 import 'package:yoopn_templates/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:yoopn_templates/features/auth/presentation/helper/auth_page_data.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 const List<AuthPageData> pages = [
   AuthPageData(
@@ -77,7 +78,7 @@ void showOtpDialog(BuildContext context, String email) {
               controller: otpController,
               keyboardType: TextInputType.number,
               maxLength: 6,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: AppTextStyles.strong,
               decoration: const InputDecoration(
                 hintText: '123456',
                 counterText: '',
@@ -88,10 +89,7 @@ void showOtpDialog(BuildContext context, String email) {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            child: Text('Cancel', style: AppTextStyles.secondary),
           ),
           ElevatedButton(
             onPressed: () {

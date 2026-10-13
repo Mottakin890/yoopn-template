@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,9 +5,12 @@ import 'package:yoopn_templates/core/dimentions/spacings.dart';
 import 'package:yoopn_templates/core/themes/app_colors.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_bloc.dart';
-import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_event.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/bloc/vpn_state.dart';
 import 'package:yoopn_templates/features/dashboard/presentation/helper/vpn_status.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/cancel_link.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/connected_timer_title.dart';
+import 'package:yoopn_templates/features/dashboard/presentation/widgets/status_dot.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class StatusPanel extends StatelessWidget {
   const StatusPanel({super.key});
@@ -36,7 +37,7 @@ class StatusPanel extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _Dot(
+                StatusDot(
                   color: connected
                       ? AppColors.success
                       : connecting
@@ -50,11 +51,7 @@ class StatusPanel extends StatelessWidget {
                       : connecting
                       ? 'Connecting'
                       : 'Standby',
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.labelEmphasis,
                 ),
               ],
             ),
@@ -65,122 +62,28 @@ class StatusPanel extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (connected && since != null)
-                    _ConnectedTimerTitle(since: since)
+                    ConnectedTimerTitle(since: since)
                   else
                     Text(
                       status.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 26.sp,
-                        height: 1.15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.displayLarge,
                     ),
                   Spacing.vertical(4),
                   Text(
                     supporting,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTextStyles.bodySmall,
                   ),
                 ],
               ),
             ),
-            if (connecting) ...[Spacing.vertical(4), _CancelLink()],
+            if (connecting) ...[Spacing.vertical(4), const CancelLink()],
           ],
         );
       },
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 8.r,
-      height: 8.r,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-    );
-  }
-}
-
-class _ConnectedTimerTitle extends StatefulWidget {
-  const _ConnectedTimerTitle({required this.since});
-
-  final DateTime since;
-
-  @override
-  State<_ConnectedTimerTitle> createState() => _ConnectedTimerTitleState();
-}
-
-class _ConnectedTimerTitleState extends State<_ConnectedTimerTitle> {
-  Timer? _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final elapsed = DateTime.now().difference(widget.since);
-    final h = elapsed.inHours.toString().padLeft(2, '0');
-    final m = (elapsed.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
-    return Text(
-      'Connected for $h:$m:$s',
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 26.sp,
-        height: 1.15,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
-      ),
-    );
-  }
-}
-
-class _CancelLink extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: () {
-        AppLogger.i('UI', 'StatusPanel cancel tapped');
-        context.read<VpnBloc>().add(const VpnToggled());
-      },
-      style: TextButton.styleFrom(
-        minimumSize: Size.zero,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Text(
-        'Cancel',
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-        ),
-      ),
     );
   }
 }

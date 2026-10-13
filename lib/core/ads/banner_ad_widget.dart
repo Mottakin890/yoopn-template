@@ -4,6 +4,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:yoopn_templates/core/ads/ad_config.dart';
 import 'package:yoopn_templates/core/themes/app_colors.dart';
 import 'package:yoopn_templates/core/utils/app_logger.dart';
+import 'package:yoopn_templates/core/themes/app_text_styles.dart';
 
 class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({super.key});
@@ -75,7 +76,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       child: Center(
         child: Text(
           _failed ? 'Ad unavailable' : 'Loading ad…',
-          style: TextStyle(fontSize: 10.sp, color: AppColors.textHint),
+          style: AppTextStyles.caption,
         ),
       ),
     );

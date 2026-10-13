@@ -30,9 +30,6 @@ class VpnRepositoryImpl implements VpnRepository {
 
   List<VpnServer> get cachedServers => List.unmodifiable(_servers);
 
-  /// Serializes concurrent getServers() calls: Dart has no locks, so chain
-  /// on [_tail]. Readers (findServer/getBestServer) see atomic reference
-  /// swaps, which are always a consistent list.
   Future<void> _tail = Future.value();
 
   Future<T> _serialized<T>(Future<T> Function() fn) {
@@ -117,8 +114,7 @@ class VpnRepositoryImpl implements VpnRepository {
             'in ${netSw.elapsedMilliseconds}ms',
       );
       _servers = _mergeServers(_servers, servers);
-      // Awaited (not fire-and-forget): callers must never read a cache the
-      // write hasn't reached, and _persistCache never throws.
+
       try {
         final json = await gateDataSource.fetchJson();
         await _persistCache(json, servers);
@@ -151,8 +147,8 @@ class VpnRepositoryImpl implements VpnRepository {
       if (!_servers.any((s) => s.isVpnGate)) {
         AppLogger.w('VPN', 'repo fallback has no live relay — throwing');
         throw const VpnException(
-          'unreachable',
-          'VPNGate is unreachable. Check your connection (or try mobile data vs Wi-Fi) and tap Retry.',
+          VpnFailureCode.unreachable,
+          detail: 'VPNGate is unreachable. Check your connection (or try mobile data vs Wi-Fi) and tap Retry.',
         );
       }
       AppLogger.w('VPN', 'repo fallback → memory (${_servers.length})');
