@@ -68,7 +68,6 @@ android/key.properties
 ios/Runner/GoogleService-Info.plist
 android/app/google-services.json
 **/service_role*.json
-gitleaks.toml.local
 
 # OS / editor noise
 .DS_Store

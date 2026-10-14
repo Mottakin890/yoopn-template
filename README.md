@@ -6,7 +6,7 @@ It ships the complete source of a working VPN client: a real OpenVPN tunnel, a l
 
 ```sh
 git clone <this-repo> && cd yoopn-templates
-./tool/install_hooks.sh        # wires pre-commit guards, creates .env from the example
+cp .env.example .env           # fill in Supabase values
 flutter pub get
 flutter run -d <device>
 ```
@@ -45,7 +45,7 @@ flutter test       # All tests passed! (74 tests)
 | **Repository pattern** | Contracts in `domain`, implementations in `data`, datasources behind interfaces |
 | **Dependency injection** | GetIt composition root, 20 registrations, platform strategies resolved at wiring time |
 | **Offline-first** | 5-tier server sourcing that stays useful with the network unplugged |
-| **Security engineering** | 3-layer credential defence, CI that unpacks the APK to *prove* no key shipped |
+| **Security engineering** | Compile-time credential injection via `--dart-define`, placeholder guards |
 | **Concurrency** | Single-flight dedup, promise-chaining serialisation, generation guards against stale callbacks |
 | **Design system** | 25 colour + 29 type tokens, zero literals outside the token files |
 | **Native integration** | Android VPN-consent forwarding, iOS Network Extension target, real OpenVPN engine |
@@ -261,21 +261,6 @@ cp .env.example .env
 flutter build apk --release --dart-define-from-file=.secrets.json
 ```
 
-**Three enforcement layers:**
-
-| Layer | Mechanism |
-|---|---|
-| Pre-commit | `tool/scan_secrets.sh --staged`, then `flutter analyze` — hard failures |
-| Scanner | `.gitleaks.toml` — default ruleset plus Supabase keys, concrete `*.supabase.co` refs, production AdMob ids, Firebase secrets, keystore passwords |
-| CI `guard` job | gitleaks over full history, fallback sweep, plus structural assertions that `.env` and keystores are untracked. `quality` and `build` both `needs: guard` |
-
-**The `build` job is the part worth reading.** After producing a release APK it
-unpacks the artifact and asserts the Supabase URL is **absent** from the asset
-bundle but **present** in `libapp.so`. That proves two things at once — the key
-never ships in cleartext, *and* the `--dart-define` actually applied rather than
-being silently dropped. Most CI configs verify only the first and ship a broken
-app.
-
 **Placeholders fail fast.** `looksLikePlaceholder` rejects `YOUR_…`, `changeme`,
 `<project-ref>`, `${…}` shaped values at runtime, so a fresh clone fails with
 *"SUPABASE_URL is not configured"* rather than a DNS error against a
@@ -283,13 +268,6 @@ non-existent project. It is a pure function with its own test suite.
 
 `service_role` keys are denylisted and must never enter a client build — the
 client uses the publishable key, protected by Row Level Security.
-
-Verify the tree yourself at any time:
-
-```sh
-./tool/scan_secrets.sh --history   # full git history
-./tool/scan_secrets.sh             # working tree
-```
 
 ---
 
@@ -321,7 +299,7 @@ All of it is here:
 |---|---|
 | SDK pinning | **FVM** 3.47.6 (`.fvmrc`) |
 | Analysis | `flutter analyze` + `flutter_lints` 6, strict inference & raw types |
-| Formatting | `dart format`, enforced in CI |
+| Formatting | `dart format` |
 | DI | **GetIt** 9 |
 | State | **flutter_bloc** 9 + `equatable` 3 |
 | Routing | **go_router** 18 with auth-guard redirect |
@@ -332,13 +310,8 @@ All of it is here:
 | VPN | `openvpn_flutter` 1 |
 | Ads | **google_mobile_ads** 9 |
 | Tests | `flutter_test` — 74 tests |
-| CI | GitHub Actions, 4 gated jobs |
-| Secret scanning | **gitleaks** + portable fallback sweep + pre-commit |
-| Deps | Dependabot (actions + gradle) |
 
 ```sh
-./tool/install_hooks.sh                       # guards + .env
-./tool/scan_secrets.sh [--staged|--history]   # credential sweep
 ./supabase/probe.sh                           # telemetry inserts -> 201 OK
 dart run tool/fetch_snapshot.dart              # refresh bundled relay snapshot
 ```
@@ -377,7 +350,6 @@ codes each live in exactly one place.
 4. Align the deep-link scheme across `AndroidManifest.xml`, `Info.plist`, `.env`
    and the Supabase redirect allowlist.
 5. Update the App Group / provider bundle id in `openvpn_tunnel.dart`.
-6. Re-run `./tool/scan_secrets.sh --history`.
 
 Steps 2–5 are exactly what `com.vis.yoopn` → `com.example.yoopn` did in this
 repository, so the diff is the reference implementation.
